@@ -1,2 +1,2 @@
-# self-hosted
-Self Host Slauth on your own infrastructure 
+# Self Host Slauth  
+Documentation: https://docs.slauth.io/self-hosted
