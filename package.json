@@ -1,0 +1,41 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Mono repo for Slauth.io",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "docker compose --env-file ./config.env -f docker-compose.dev.yml up --remove-orphans -d $npm_config_services",
+    "stop-dev": "docker compose --env-file ./config.env -f docker-compose.dev.yml down",
+    "build": "docker compose --env-file ./config.env -f docker-compose.dev.yml build $npm_config_services",
+    "force-build": "docker compose --env-file ./config.env -f docker-compose.dev.yml build --no-cache $npm_config_services",
+    "logs": "docker compose --env-file ./config.env logs --tail=100 -f $npm_config_services",
+    "lint": "eslint . --ext ts,tsx",
+    "lint-fix": "eslint . --ext ts,tsx --fix --cache",
+    "fix": "npm run lint-fix",
+    "format-check": "prettier . --check",
+    "stop": "export $(grep -v '^#' config.env | xargs) && docker compose down --remove-orphans",
+    "exec": "export $(grep -v '^#' config.env | xargs) && docker compose -f docker-compose.yml exec -it",
+    "down": "npm run stop",
+    "format": "prettier . -w",
+    "prepare": "husky install",
+    "prerun": "bash configure.sh",
+    "start": "docker compose --env-file ./config.env up --remove-orphans -d $npm_config_services",
+    "ps": "docker compose --env-file ./config.env ps"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.2.0",
+    "@typescript-eslint/parser": "^6.2.0",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-progress": "^0.0.1",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-unused-imports": "^3.0.0",
+    "husky": "^8.0.0",
+    "prettier": "^3.0.0"
+  }
+}

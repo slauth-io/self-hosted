@@ -1,0 +1,168 @@
+version: '3.7'
+
+x-common-variables: &common-variables
+    NODE_ENV: ${ENVIRONMENT}
+    DOMAIN: ${DOMAIN}
+    HTTP_PROTOCOL: ${HTTP_PROTOCOL}
+    GITHUB_INSTALL_URL: ${GITHUB_INSTALL_URL}
+    ANALYTICS_KEY: ${ANALYTICS_KEY}
+    ANALYTICS_HOST: ${ANALYTICS_HOST}
+
+x-common-ui-variables: &common-ui-variables
+    <<: *common-variables
+    IS_SERVER: false
+
+    REALTIME_ROUTE: ${REALTIME_ROUTE}
+    NOTIFICATION_ROUTE: ${NOTIFICATION_ROUTE}
+    DASHBOARD_ROUTE: ${DASHBOARD_ROUTE}
+    DASHBOARD_API_ROUTE: ${DASHBOARD_API_ROUTE}
+    ACCOUNTS_ROUTE: ${ACCOUNTS_ROUTE}
+    API_REFERENCE_ROUTE: ${API_REFERENCE_ROUTE}
+    IDENTITY_ROUTE: ${IDENTITY_ROUTE}
+    FILE_ROUTE: ${FILE_ROUTE}
+
+x-common-server-variables: &common-server-variables
+    <<: *common-variables
+    CLUSTER_KEY: ${CLUSTER_KEY}
+
+    DATABASE_PORT: ${DATABASE_PORT}
+    DATABASE_USERNAME: ${DATABASE_USERNAME}
+    DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    DATABASE_NAME: ${DATABASE_NAME}
+    DATABASE_HOST: ${DATABASE_HOST}
+
+    REDIS_PASSWORD: ${REDIS_PASSWORD}
+    REDIS_HOST: ${REDIS_HOST}
+    REDIS_PORT: ${REDIS_PORT}
+
+    ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+
+    NOTIFICATION_HOSTNAME: ${NOTIFICATION_HOSTNAME}
+
+    GITHUB_APP_ID: ${GITHUB_APP_ID}
+    GITHUB_APP_PK_PATH: ${GITHUB_APP_PK_PATH}
+    GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+    GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+    AWS_CODE_IMPORT_BUCKET: ${AWS_CODE_IMPORT_BUCKET}
+
+    OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+    MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+    MINIO_HOSTNAME: ${MINIO_HOSTNAME}
+
+    IS_SERVER: true
+
+services:
+    minio:
+        networks:
+            - slauth
+        ports:
+            - '3652:9000'
+            - '3653:9001'
+        image: minio/minio:latest
+        restart: always
+        command: server /data --console-address ":9001"
+        environment:
+            MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+            MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+        volumes:
+            - minio:/data
+
+    redis:
+        image: redis:7.0.3
+        restart: always
+        networks:
+            - slauth
+        command: redis-server --requirepass "${REDIS_PASSWORD}"
+        environment:
+            REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+    postgres:
+        image: postgres:15
+        restart: always
+        environment:
+            POSTGRES_USER: ${DATABASE_USERNAME}
+            POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+            POSTGRES_DB: ${DATABASE_NAME}
+        networks:
+            - slauth
+        volumes:
+            - postgres:/var/lib/postgresql/data
+
+    workers:
+        networks:
+            - slauth
+        restart: always
+        environment:
+            <<: *common-server-variables
+            PORT: 5587
+            ENVIRONMENT: ${ENVIRONMENT}
+
+    api:
+        networks:
+            - slauth
+        restart: always
+        environment:
+            <<: *common-server-variables
+            PORT: 5504
+
+    notification:
+        networks:
+            - slauth
+        restart: always
+        environment:
+            <<: *common-server-variables
+            PORT: 3568
+            SMTP_USERNAME: ${SMTP_USERNAME}
+            SMTP_PASSWORD: ${SMTP_PASSWORD}
+            SMTP_PORT: ${SMTP_PORT}
+            SMTP_EMAIL: ${SMTP_EMAIL}
+            SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+            SMTP_IS_SECURE: ${SMTP_IS_SECURE}
+            SMTP_HOST: ${SMTP_HOST}
+
+    identity:
+        networks:
+            - slauth
+        restart: always
+        environment:
+            <<: *common-server-variables
+            PORT: 5087
+
+    accounts:
+        networks:
+            - slauth
+        restart: always
+        environment:
+            <<: *common-ui-variables
+            PORT: 5006
+
+    dashboard:
+        networks:
+            - slauth
+        restart: always
+        environment:
+            <<: *common-ui-variables
+            PORT: 5005
+
+    ingress:
+        restart: always
+        networks:
+            - slauth
+        environment:
+            <<: *common-variables
+
+volumes:
+    postgres:
+    clickhouse:
+    minio:
+
+
+networks:
+    slauth:
+        driver: bridge

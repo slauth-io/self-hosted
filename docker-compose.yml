@@ -1,0 +1,81 @@
+version: '3.7'
+
+services:
+
+    minio:
+        extends:
+            file: ./docker-compose.base.yml
+            service: minio
+
+    redis:
+        extends:
+            file: ./docker-compose.base.yml
+            service: redis
+
+    postgres:
+        ports:
+            - '5402:5432' # for access to postgres for backups. If you dont need backup, you can comment this line out to make it more secure.
+        extends:
+            file: ./docker-compose.base.yml
+            service: postgres
+
+    identity:
+        image: ghcr.io/slauth-io/identity:${APP_TAG}
+        extends:
+            file: ./docker-compose.base.yml
+            service: identity
+
+    notification:
+        image: ghcr.io/slauth-io/notification:${APP_TAG}
+        extends:
+            file: ./docker-compose.base.yml
+            service: notification
+
+    api:
+        image: ghcr.io/slauth-io/api:${APP_TAG}
+        extends:
+            file: ./docker-compose.base.yml
+            service: api
+        secrets:
+            - github_pk
+
+    accounts:
+        image: ghcr.io/slauth-io/accounts:${APP_TAG}
+        extends:
+            file: ./docker-compose.base.yml
+            service: accounts
+
+    dashboard:
+        image: ghcr.io/slauth-io/dashboard:${APP_TAG}
+        extends:
+            file: ./docker-compose.base.yml
+            service: dashboard
+
+    workers:
+        image:  ghcr.io/slauth-io/workers:${APP_TAG}
+        extends:
+            file: ./docker-compose.base.yml
+            service: workers
+        secrets:
+            - github_pk
+
+    ingress:
+        image: ghcr.io/slauth-io/ingress:${APP_TAG}
+        ports:
+            - '80:80'
+        extends:
+            file: ./docker-compose.base.yml
+            service: ingress
+
+volumes:
+    postgres:
+    clickhouse:
+    minio: 
+
+secrets:
+    github_pk: 
+        file: dev-secrets/gh-app-pk.pem
+
+networks:
+    slauth:
+        driver: bridge
